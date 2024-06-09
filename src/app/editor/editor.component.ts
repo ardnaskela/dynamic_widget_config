@@ -26,7 +26,6 @@ export class EditorComponent implements AfterViewInit {
     firebase.initializeApp(environment.firebaseConfig);
     this.storage = firebase.storage();
   }
-
   ngAfterViewInit() {
     const auth = getAuth();
     signInAnonymously(auth)
