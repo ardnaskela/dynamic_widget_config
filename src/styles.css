@@ -21,8 +21,8 @@ body {
 }
 
 textarea.form-input.je-edit-json--textarea {
-  width: 10rem;
-  height: 10rem;
+  width: 20rem;
+  height: 20rem;
   resize: both;
   min-width: none;
   min-height: none;
