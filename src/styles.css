@@ -19,3 +19,11 @@
 body {
   padding: 20px;
 }
+
+textarea.form-input.je-edit-json--textarea {
+  width: 10rem;
+  height: 10rem;
+  resize: both;
+  min-width: none;
+  min-height: none;
+}

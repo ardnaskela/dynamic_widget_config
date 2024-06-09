@@ -5,20 +5,24 @@ import { environment } from '../../environment/environment';
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/storage';
 import { getAuth, signInAnonymously } from 'firebase/auth';
+import { ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-editor',
   template:
-    '<div id="editor"></div> <button class="btn btn-success"  (click)="save()">Salva</button>',
+    '<div id="editor"></div> <button class="btn btn-success" *ngIf="isContentLoaded" (click)="save()">Salva</button>',
   standalone: true,
   styleUrl: 'editor.component.css',
+  imports: [CommonModule],
 })
 export class EditorComponent implements AfterViewInit {
   editor: any;
   widgetName: string = 'demo_widget';
   storage: firebase.storage.Storage;
+  isContentLoaded: boolean = false;
 
-  constructor() {
+  constructor(private cdr: ChangeDetectorRef) {
     firebase.initializeApp(environment.firebaseConfig);
     this.storage = firebase.storage();
   }
@@ -70,11 +74,14 @@ export class EditorComponent implements AfterViewInit {
                 };
                 JSONEditor.defaults.editors.object.options.collapsed = true;
                 JSONEditor.defaults.editors.array.options.collapsed = true;
-
                 this.editor = new JSONEditor(container, config).on(
                   'ready',
                   () => {
                     this.editor.setValue(object);
+                    setTimeout(() => {
+                      this.isContentLoaded = true;
+                      this.cdr.detectChanges(); // Force change detection
+                    }, 0);
                   }
                 );
               });
