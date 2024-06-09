@@ -28,64 +28,68 @@ export class EditorComponent implements AfterViewInit {
   }
   ngAfterViewInit() {
     const auth = getAuth();
+    const container = document.getElementById('editor');
+    const schemaPath = 'dynamic_widgets/' + this.widgetName + '_schema.json';
+    const dataPath = 'dynamic_widgets/' + this.widgetName + '.json';
+    const schemaRef = this.storage.ref(schemaPath);
+    const dataRef = this.storage.ref(dataPath);
     signInAnonymously(auth)
       .then(() => {
-        const container = document.getElementById('editor');
-        const schemaPath =
-          'dynamic_widgets/' + this.widgetName + '_schema.json';
-        this.storage
-          .ref(schemaPath)
-          .getDownloadURL()
+        return schemaRef
+          .getMetadata()
+          .then(() => {
+            // If the schema file exists, get its download URL
+            return schemaRef.getDownloadURL();
+          })
           .catch(() => {
-            // If the schema file doesn't exist, generate and upload it
-            fetch('dynamic_widgets/' + this.widgetName + '.json')
+            // If the schema file doesn't exist, fetch the JSON data from Firebase Storage,
+            // generate a schema from it, make all fields optional, and upload the schema
+            return dataRef
+              .getDownloadURL()
+              .then((url) => fetch(url))
               .then((response) => response.json())
               .then((object) => {
                 const schema = inferSchema(object).toJSONSchema();
                 const optionalSchema = this.makeAllFieldsOptional(schema);
-                const file = this.storage.ref(schemaPath);
-                file.putString(JSON.stringify(optionalSchema, null, 2));
-              });
-          })
-          .finally(() => {
-            Promise.all([
-              this.storage
-                .ref('dynamic_widgets/' + this.widgetName + '.json')
-                .getDownloadURL(),
-              this.storage.ref(schemaPath).getDownloadURL(),
-            ]).then(([objectUrl, schemaUrl]) => {
-              Promise.all([
-                fetch(objectUrl).then((response) => response.json()),
-                fetch(schemaUrl).then((response) => response.json()),
-              ]).then(([object, schema]) => {
-                const config = {
-                  use_name_attributes: false,
-                  theme: 'spectre',
-                  iconlib: 'spectre',
-                  disable_edit_json: false,
-                  disable_properties: false,
-                  disable_collapse: false,
-                  expand_height: true,
-                  compact: true,
-                  remove_empty_properties: true,
-                  array_controls_top: true,
-                  schema: schema,
-                };
-                JSONEditor.defaults.editors.object.options.collapsed = true;
-                JSONEditor.defaults.editors.array.options.collapsed = true;
-                this.editor = new JSONEditor(container, config).on(
-                  'ready',
-                  () => {
-                    this.editor.setValue(object);
-                    setTimeout(() => {
-                      this.isContentLoaded = true;
-                      this.cdr.detectChanges(); // Force change detection
-                    }, 0);
-                  }
+                return schemaRef.putString(
+                  JSON.stringify(optionalSchema, null, 2)
                 );
               });
+          });
+      })
+      .finally(() => {
+        Promise.all([
+          dataRef.getDownloadURL(),
+          schemaRef.getDownloadURL(),
+        ]).then(([objectUrl, schemaUrl]) => {
+          Promise.all([
+            fetch(objectUrl).then((response) => response.json()),
+            fetch(schemaUrl).then((response) => response.json()),
+          ]).then(([object, schema]) => {
+            const config = {
+              use_name_attributes: false,
+              theme: 'spectre',
+              iconlib: 'spectre',
+              disable_edit_json: false,
+              disable_properties: false,
+              disable_collapse: false,
+              expand_height: true,
+              compact: true,
+              remove_empty_properties: true,
+              array_controls_top: true,
+              schema: schema,
+            };
+            JSONEditor.defaults.editors.object.options.collapsed = true;
+            JSONEditor.defaults.editors.array.options.collapsed = true;
+            this.editor = new JSONEditor(container, config).on('ready', () => {
+              this.editor.setValue(object);
+              setTimeout(() => {
+                this.isContentLoaded = true;
+                this.cdr.detectChanges(); // Force change detection
+              }, 0);
             });
           });
+        });
       })
       .catch((error) => {
         var errorCode = error.code;
