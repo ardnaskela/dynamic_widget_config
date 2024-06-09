@@ -27,3 +27,7 @@ textarea.form-input.je-edit-json--textarea {
   min-width: none;
   min-height: none;
 }
+
+.columns > div:first-child {
+  padding-left: 0.4rem;
+}

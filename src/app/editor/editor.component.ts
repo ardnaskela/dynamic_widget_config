@@ -81,13 +81,20 @@ export class EditorComponent implements AfterViewInit {
             };
             JSONEditor.defaults.editors.object.options.collapsed = true;
             JSONEditor.defaults.editors.array.options.collapsed = true;
-            this.editor = new JSONEditor(container, config).on('ready', () => {
-              this.editor.setValue(object);
-              setTimeout(() => {
-                this.isContentLoaded = true;
-                this.cdr.detectChanges(); // Force change detection
-              }, 0);
-            });
+            this.editor = new JSONEditor(container, config)
+              .on('ready', () => {
+                this.editor.setValue(object);
+                setTimeout(() => {
+                  this.isContentLoaded = true;
+                  this.cdr.detectChanges();
+                }, 0);
+              })
+              .on('add', (property: any) => {
+                console.log('add', property);
+                setTimeout(() => {
+                  this.cdr.detectChanges();
+                }, 0);
+              });
           });
         });
       })
